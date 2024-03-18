@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 import os
 
 path = 'C:/Users/Brecht/OneDrive/Bureaublad/log files/'
@@ -22,9 +23,9 @@ def create_dataframe():
     names = get_filenames(path)
     dfs = []
     for name in names:
-        parts = name.split('_')
-        site = parts[1]
         if name.startswith('CommunicationLog'):
+            parts = name.split('_')
+            site = parts[1]
             file_path = os.path.join(path, name)
             new_df = pd.read_csv(file_path, delimiter=',')
             new_df['Site'] = site
@@ -37,18 +38,34 @@ total_log_df = create_dataframe()
 print('Kies de gewenste optie:')
 print('\t1. Zoek op id nummer.')
 print('\t2. Vrije id nummers.')
+print('\t3. Verbruik per site.')
+print('\t3. Zoek op datum.')
+
+
 try:
-    choice = int(input())
-    if choice == 1:
-        id = int(input('Geef id nummer:'))
-        result = total_log_df[total_log_df['Calling ID'] == id][['Calling ID', 'Date', 'Site']].tail(3)
-        print(result)
-    elif choice == 2:
-        free_ids = []
-        for i in range(1, 1000):
-            comparison_result = total_log_df['Calling ID'] == i
-            if not comparison_result.any():
-                free_ids.append(i)
-        print(free_ids)
+    while True:
+        choice = int(input())
+        if choice == 1:
+            id = int(input('Geef id nummer:'))
+            result = total_log_df[total_log_df['Calling ID'] == id][['Calling ID', 'Date', 'Site']].tail(3)
+            print(result)
+        elif choice == 2:
+            free_ids = []
+            for i in range(1, 1000):
+                comparison_result = total_log_df['Calling ID'] == i
+                if not comparison_result.any():
+                    free_ids.append(i)
+            print(free_ids)
+        elif choice == 3:
+            result = total_log_df['Site']
+            plt.hist(result, color='skyblue', edgecolor='black')
+            plt.xlabel('Site')
+            plt.ylabel('amount')
+            plt.title('Site usage')
+            plt.show()
+        elif choice == 4:
+            print('test')
+        else:
+            break
 except Exception as e:
     print(f'Er is een fout opgetreden: {e}')
