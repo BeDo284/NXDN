@@ -46,7 +46,3 @@ def compare_file_names():
 def get_data():
     total_df = pd.DataFrame()
     files_to_read = compare_file_names()
-
-
-
-# print(get_old_file_names())
