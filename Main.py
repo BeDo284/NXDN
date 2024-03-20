@@ -9,15 +9,18 @@ path = 'C:/Users/Brecht/OneDrive/Bureaublad/log files/'
 def get_filenames(file_path):
     file_names = []
     for filename in os.listdir(file_path):
-        file_names.append(filename)
+        if filename.startswith('CommunicationLog'):
+            file_names.append(filename)
     return file_names
+
 
 def get_data():
     new_file_names = get_filenames(path)
     old_file_names = []
-    if not os.path.exists(path+'filenames.txt'):
-        with open('filenames.txt','w') as f:
+    if not os.path.exists(path + 'filenames.txt'):
+        with open('filenames.txt', 'w') as f:
             f.write('test')
+
 
 def create_dataframe():
     names = get_filenames(path)
@@ -41,13 +44,12 @@ print('\t2. Vrije id nummers.')
 print('\t3. Verbruik per site.')
 print('\t3. Zoek op datum.')
 
-
 try:
     while True:
         choice = int(input())
         if choice == 1:
-            id = int(input('Geef id nummer:'))
-            result = total_log_df[total_log_df['Calling ID'] == id][['Calling ID', 'Date', 'Site']].tail(3)
+            radio_id = int(input('Geef id nummer:'))
+            result = total_log_df[total_log_df['Calling ID'] == radio_id][['Calling ID', 'Date', 'Site']].tail(3)
             print(result)
         elif choice == 2:
             free_ids = []
