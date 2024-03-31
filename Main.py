@@ -1,5 +1,6 @@
 import csv
 import os
+from datetime import datetime
 
 import pandas as pd
 
@@ -74,22 +75,45 @@ total_df = pd.read_csv(output_csv_file)
 total_df[['Date', 'Time']] = total_df['Date'].str.split(' ', expand=True)
 total_df['Date'] = pd.to_datetime(total_df['Date'], errors='coerce', format='%m/%d/%y', dayfirst=True)
 total_df['Time'] = pd.to_datetime(total_df['Time'], format='%H:%M:%S').dt.time
-
 total_sorted_df = total_df.sort_values(by=['Date', 'Time'])
-#total_sorted_df.set_index('Date', inplace=True)
 
 print('Kies de gewenste optie:')
 print('\t1. Zoek op id nummer.')
 print('\t2. Vrije id nummers.')
-print('\t3. Verbruik per site.')
+print('\t3. Geef id nummers die in een jaar niet geregistreerd zijn.')
 print('\t4. Zoek op datum.')
+print('\t5. ??')
+
 try:
+    today = datetime.now().date()
+    total_sorted_df['Difference'] = (pd.Timestamp(today) - total_sorted_df['Date']).dt.days
+    total_sorted_df.dropna(subset=['Difference'], inplace=True)
+    total_sorted_df.dropna(subset=['Calling ID'], inplace=True)
+    try:
+        total_sorted_df['Calling ID'] = total_sorted_df['Calling ID'].astype(int)
+    except ValueError:
+        print("Error: 'id' column contains non-integer values.")
+
     while True:
         choice = int(input('optie: '))
         if choice == 1:
-            radio_id = input('Geef id nummer:')
+            radio_id = int(input('Geef id nummer:'))
             result = total_sorted_df[total_sorted_df['Calling ID'] == radio_id][
-                ['Calling ID', 'Date', 'Time', 'Site']].tail()
+                ['Calling ID', 'Date', 'Time', 'Difference', 'Site']].tail()
             print(result)
+        elif choice == 2:
+            existing_ids = set(total_sorted_df['Calling ID'])
+            missing_ids = set(range(1, 800)) - existing_ids
+            print("Missing IDs:")
+            print("\n".join(map(str, sorted(missing_ids))))
+        elif choice == 3:
+            # get id nuymber that haven't been used in over a year
+            total_sorted_df = total_sorted_df[total_sorted_df['Difference'] >= 365]
+            result = total_sorted_df.groupby('Calling ID')['Difference'].min()
+            result_dict = result.to_dict()
+            for key, value in result_dict.items():
+                print(f'ID: {key}, Difference: {value}')
+        else:
+            break
 except Exception as e:
     print(f'Er is een fout opgetreden: {e}')
