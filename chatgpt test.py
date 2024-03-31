@@ -1,34 +1,39 @@
+import csv
 import os
-import pandas as pd
 
-# Directory containing CSV files
-directory = '/path/to/csv/files'
 
-# List to store file names
-file_names = []
+def merge_csv_files(input_dir, output_file, processed_file):
+    # Load processed files from the processed_file
+    processed_files = set()
+    if os.path.exists(processed_file):
+        with open(processed_file, 'r') as f:
+            processed_files = set(f.read().splitlines())
 
-# List to store dataframes
-dataframes = []
+    # Open the output CSV file in append mode
+    with open(output_file, 'a', newline='') as output_csvfile:
+        output_writer = csv.writer(output_csvfile)
 
-# Loop through each file in the directory
-for filename in os.listdir(directory):
-    if filename.endswith(".csv"):
-        # Append filename to list
-        file_names.append(filename)
-        # Read CSV file into a DataFrame
-        df = pd.read_csv(os.path.join(directory, filename))
-        # Append DataFrame to list
-        dataframes.append(df)
+        # Iterate through each file in the input directory
+        for filename in os.listdir(input_dir):
+            if filename.endswith('.csv') and filename not in processed_files:  # Check if it's a new CSV file
+                input_csvfile = os.path.join(input_dir, filename)
+                # Open each input CSV file in read mode
+                with open(input_csvfile, 'r', newline='') as input_csv:
+                    input_reader = csv.reader(input_csv)
+                    # Write each row from the input file to the output file
+                    for row in input_reader:
+                        output_writer.writerow(row)
+                # Add the filename to the set of processed files
+                processed_files.add(filename)
 
-# Concatenate all DataFrames into one
-combined_df = pd.concat(dataframes)
+    # Write processed files back to the processed_file
+    with open(processed_file, 'w') as f:
+        for filename in processed_files:
+            f.write(filename + '\n')
 
-# Save combined DataFrame to CSV
-combined_df.to_csv('combined.csv', index=False)
 
-# Save file names to a text file
-with open('file_names.txt', 'w') as f:
-    for filename in file_names:
-        f.write(filename + '\n')
-
-print("CSV files combined and file names saved successfully.")
+# Example usage
+input_directory = 'path/to/your/input/files'  # Specify the directory containing CSV files
+output_csv_file = 'path/to/your/output/merged_file.csv'  # Specify the output file path
+processed_file = 'path/to/your/processed_files.txt'  # Specify the file to store processed filenames
+merge_csv_files(input_directory, output_csv_file, processed_file)

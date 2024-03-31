@@ -1,48 +1,79 @@
-import csv
-import os
-
 import pandas as pd
+import matplotlib.pyplot as plt
+import os
+import csv
 
 path = 'C:/Users/Brecht/OneDrive/Bureaublad/log files/'
-old_file_path = 'C:/Users/Brecht/OneDrive/Bureaublad/log files/filenames.txt'
+path2 = 'E:/log files'
+file_names = []
+dataframes = []
 
-output_file = 'output_merged.csv'
-
-
-def get_filenames(file_path):
-    file_names = []
-    for filename in os.listdir(file_path):
-        file_names.append(filename)
+# read all filenames
+def get_filenames():
+    for filename in os.listdir(path2):
+        if filename.startswith('CommunicationLog'):
+            file_names.append(filename)
     return file_names
-
-
-def get_old_file_names():
-    file_names = []
-    with open(old_file_path, 'r') as f:
-        for name in f:
-            file_names.append(name.strip())
-    return file_names
-
-
-def compare_file_names():
-    new_file_names = get_filenames(path)
-    old_file_names = get_old_file_names()
-    no_corresponding_file_names = []
-    for file_name in new_file_names:
-        if file_name.startswith('CommunicationLog'):
-            if file_name not in old_file_names:
-                no_corresponding_file_names.append(file_name)
-    if os.path.isfile(old_file_path):
-        with open(old_file_path, 'a') as f:
-            for name in no_corresponding_file_names:
-                f.write(name + '\n')
-    else:
-        with open(old_file_path, 'w') as f:
-            for name in no_corresponding_file_names:
-                f.write(name + '\n')
-    return no_corresponding_file_names
 
 
 def get_data():
-    total_df = pd.DataFrame()
-    files_to_read = compare_file_names()
+    new_file_names = get_filenames(path)
+    old_file_names = []
+    if not os.path.exists(path + 'filenames.txt'):
+        with open('filenames.txt', 'w') as f:
+            f.write('test')
+
+
+def create_dataframe():
+    names = get_filenames()
+    dfs = []
+    for name in names:
+        if name.startswith('CommunicationLog'):
+            parts = name.split('_')
+            site = parts[1]
+            file_path = os.path.join(path, name)
+            new_df = pd.read_csv(file_path, delimiter=',')
+            new_df['Site'] = site
+            dfs.append(new_df)
+    log_df = pd.concat(dfs)
+    return log_df
+
+def merge_csv_files(input_dir, output_file):
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
+
+total_log_df = create_dataframe()
+print('Kies de gewenste optie:')
+print('\t1. Zoek op id nummer.')
+print('\t2. Vrije id nummers.')
+print('\t3. Verbruik per site.')
+print('\t4. Zoek op datum.')
+
+try:
+    while True:
+        choice = int(input())
+        if choice == 1:
+            radio_id = int(input('Geef id nummer:'))
+            result = total_log_df[total_log_df['Calling ID'] == radio_id][['Calling ID', 'Date', 'Site']].tail(3)
+            print(result)
+        elif choice == 2:
+            free_ids = []
+            for i in range(1, 1000):
+                comparison_result = total_log_df['Calling ID'] == i
+                if not comparison_result.any():
+                    free_ids.append(i)
+            print(free_ids)
+        elif choice == 3:
+            result = total_log_df['Site']
+            plt.hist(result, color='skyblue', edgecolor='black')
+            plt.xlabel('Site')
+            plt.ylabel('amount')
+            plt.title('Site usage')
+            plt.show()
+        elif choice == 4:
+            print('test')
+        else:
+            break
+except Exception as e:
+    print(f'Er is een fout opgetreden: {e}')
