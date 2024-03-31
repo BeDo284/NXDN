@@ -45,8 +45,8 @@ def get_new_filenames():
 
 def merge_csv_files():
     get_new_filenames()
-    print(new_files)
     if len(new_files) > 0:
+        print(f'There are {len(new_files)} new files. The file {output_csv_file} is updated!')
         try:
             with open(output_csv_file, 'a', newline='') as output_csvfile:
                 output_writer = csv.writer(output_csvfile)
@@ -66,7 +66,30 @@ def merge_csv_files():
         except Exception as e:
             print(f'An error occurred: {e}')
     else:
-        print(f'There are {len(new_files)} new files. The {output_csv_file} is up to date!')
+        print(f'There are {len(new_files)} new files. The file {output_csv_file} is up to date!')
+
 
 merge_csv_files()
 total_df = pd.read_csv(output_csv_file)
+total_df[['Date', 'Time']] = total_df['Date'].str.split(' ', expand=True)
+total_df['Date'] = pd.to_datetime(total_df['Date'], errors='coerce', format='%m/%d/%y', dayfirst=True)
+total_df['Time'] = pd.to_datetime(total_df['Time'], format='%H:%M:%S').dt.time
+
+total_sorted_df = total_df.sort_values(by=['Date', 'Time'])
+#total_sorted_df.set_index('Date', inplace=True)
+
+print('Kies de gewenste optie:')
+print('\t1. Zoek op id nummer.')
+print('\t2. Vrije id nummers.')
+print('\t3. Verbruik per site.')
+print('\t4. Zoek op datum.')
+try:
+    while True:
+        choice = int(input('optie: '))
+        if choice == 1:
+            radio_id = input('Geef id nummer:')
+            result = total_sorted_df[total_sorted_df['Calling ID'] == radio_id][
+                ['Calling ID', 'Date', 'Time', 'Site']].tail()
+            print(result)
+except Exception as e:
+    print(f'Er is een fout opgetreden: {e}')
